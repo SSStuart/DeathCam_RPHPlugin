@@ -11,7 +11,7 @@ namespace DeathCam
     public static class EntryPoint
     {
         public static string pluginName = "DeathCam";
-        public static string pluginVersion = "v 0.0.2";
+        public static string pluginVersion = "v 0.0.3";
         public static void Main()
         {
             Game.LogTrivial(pluginName + " loaded.");
@@ -34,9 +34,9 @@ namespace DeathCam
 
                         Game.LocalPlayer.IsIgnoredByEveryone = true;
                         deathCamera = new Camera(false);
-                        deathCamera.Position = Camera.RenderingCamera.Position;
+                        deathCamera.Position = new Vector3(Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z + 5);
                         //deathCamera.PointAtEntity(Game.LocalPlayer.Character, new Vector3(), true);
-                        deathCamera.Rotation = Camera.RenderingCamera.Rotation;
+                        deathCamera.Face(Game.LocalPlayer.Character.Position);
                         deathCamera.FOV = 90f;
                         deathCamera.Shake("HAND_SHAKE", 0.03f);
                         deathCamera.Active = true;
@@ -52,9 +52,9 @@ namespace DeathCam
                             Game.TimeScale = 1.0f;
                         }
                         Rage.Native.NativeFunction.Natives.ANIMPOSTFX_STOP_ALL();
-                        bigMessage.ShowColoredShard(" ", "Press ~b~SPACE~w~ to respawn", HudColor.Damage, HudColor.InGameBackground, 2000);
+                        bigMessage.ShowColoredShard(" ", "Press ~b~"+GameControl.Jump+"~w~ to respawn", HudColor.Damage, HudColor.InGameBackground, 2000);
 
-                        while (!Game.IsKeyDown(System.Windows.Forms.Keys.Space) && !revived)
+                        while (!Game.IsControlPressed(2, GameControl.Jump) && !revived)
                         {
                             GameFiber.Yield();
                             float yRotMagnitude = NativeFunction.CallByName<float>("GET_CONTROL_NORMAL", 0, (int)GameControl.LookUpDown) * 10f;
@@ -73,13 +73,13 @@ namespace DeathCam
                                 cameraSpeedFactor = 2;
                             else
                                 cameraSpeedFactor = 1;
-                            if (Game.IsKeyDownRightNow(System.Windows.Forms.Keys.Up) && deathCamera.DistanceTo(Game.LocalPlayer.Character) > 1)
+                            if (Game.IsControlPressed(2, GameControl.MoveUpOnly) && deathCamera.DistanceTo(Game.LocalPlayer.Character) > 1)
                                 deathCamera.Position += deathCamera.ForwardVector * 0.1f * cameraSpeedFactor;
-                            else if (Game.IsKeyDownRightNow(System.Windows.Forms.Keys.Down))
+                            else if (Game.IsControlPressed(2, GameControl.MoveDownOnly))
                                 deathCamera.Position -= deathCamera.ForwardVector * 0.1f * cameraSpeedFactor;
-                            if (Game.IsKeyDownRightNow(System.Windows.Forms.Keys.Right) && deathCamera.DistanceTo(Game.LocalPlayer.Character) > 1)
+                            if (Game.IsControlPressed(2, GameControl.MoveRightOnly))
                                 deathCamera.Position += deathCamera.RightVector * 0.1f * cameraSpeedFactor;
-                            else if (Game.IsKeyDownRightNow(System.Windows.Forms.Keys.Left))
+                            else if (Game.IsControlPressed(2, GameControl.MoveLeftOnly))
                                 deathCamera.Position -= deathCamera.RightVector * 0.1f * cameraSpeedFactor;
                             
                             if (Game.LocalPlayer.Character.Health > Game.LocalPlayer.Character.FatalInjuryHealthThreshold)
