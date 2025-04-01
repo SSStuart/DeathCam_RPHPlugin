@@ -76,6 +76,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>call C:\Users\Stuart\source\repos\DeathCam\bin\x64\Debug\Z-[moveToPluginsFolder].bat</PostBuildEvent>
+    <PostBuildEvent>call C:\Users\SSStuart\source\repos\DeathCam\bin\x64\Debug\Z-[moveToPluginsFolder].bat</PostBuildEvent>
   </PropertyGroup>
 </Project>

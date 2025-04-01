@@ -57,6 +57,9 @@ namespace DeathCam
                         while (!Game.IsControlPressed(2, GameControl.Jump) && !revived)
                         {
                             GameFiber.Yield();
+                            if (Game.IsScreenFadingOut)
+                                Game.FadeScreenIn(0);
+
                             float yRotMagnitude = NativeFunction.CallByName<float>("GET_CONTROL_NORMAL", 0, (int)GameControl.LookUpDown) * 10f;
                             float xRotMagnitude = NativeFunction.CallByName<float>("GET_CONTROL_NORMAL", 0, (int)GameControl.LookLeftRight) * 10f;
 
