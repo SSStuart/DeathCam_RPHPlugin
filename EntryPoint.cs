@@ -33,13 +33,16 @@ namespace DeathCam
                         bool revived = false;
 
                         Game.LocalPlayer.IsIgnoredByEveryone = true;
-                        deathCamera = new Camera(false);
-                        deathCamera.Position = new Vector3(Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z + 5);
-                        //deathCamera.PointAtEntity(Game.LocalPlayer.Character, new Vector3(), true);
-                        deathCamera.Face(Game.LocalPlayer.Character.Position);
-                        deathCamera.FOV = 90f;
+                        deathCamera = new Camera(false)
+                        {
+                            FOV = NativeFunction.Natives.GET_GAMEPLAY_CAM_FOV<float>(),
+                            Position = NativeFunction.Natives.GET_GAMEPLAY_CAM_COORD<Vector3>(),
+                            Rotation = NativeFunction.Natives.GET_GAMEPLAY_CAM_ROT<Rotator>()
+                        };
+                        deathCamera.PointAtEntity(Game.LocalPlayer.Character, new Vector3(), true);
                         deathCamera.Shake("HAND_SHAKE", 0.03f);
                         deathCamera.Active = true;
+
                         BigMessageThread bigMessageThread = new BigMessageThread(true);
                         BigMessageHandler bigMessage = bigMessageThread.MessageInstance;
                         uint DeathTimeout = Game.GameTime + 3000;
@@ -51,8 +54,11 @@ namespace DeathCam
                                 Game.FadeScreenIn(0);
                             Game.TimeScale = 1.0f;
                         }
-                        Rage.Native.NativeFunction.Natives.ANIMPOSTFX_STOP_ALL();
+                        NativeFunction.Natives.ANIMPOSTFX_STOP_ALL();
                         bigMessage.ShowColoredShard(" ", "Press ~b~"+GameControl.Jump+"~w~ to respawn", HudColor.Damage, HudColor.InGameBackground, 2000);
+
+                        GameFiber.Sleep(500);
+                        NativeFunction.Natives.STOP_CAM_POINTING(deathCamera);
 
                         while (!Game.IsControlPressed(2, GameControl.Jump) && !revived)
                         {
@@ -73,9 +79,9 @@ namespace DeathCam
                                 deathCamera.FOV -= 2;
 
                             if (Game.IsShiftKeyDownRightNow)
-                                cameraSpeedFactor = 2;
+                                cameraSpeedFactor += 0.1f;
                             else
-                                cameraSpeedFactor = 1;
+                                cameraSpeedFactor = MathHelper.Max(1f, cameraSpeedFactor - 0.2f);
                             if (Game.IsControlPressed(2, GameControl.MoveUpOnly) && deathCamera.DistanceTo(Game.LocalPlayer.Character) > 1)
                                 deathCamera.Position += deathCamera.ForwardVector * 0.1f * cameraSpeedFactor;
                             else if (Game.IsControlPressed(2, GameControl.MoveDownOnly))
