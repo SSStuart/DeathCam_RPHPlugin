@@ -77,8 +77,13 @@ namespace DeathCam
                                 deathCamera.FOV += 2;
                             else if (Game.GetMouseWheelDelta() > 0)
                                 deathCamera.FOV -= 2;
+                            // Controller support for zooming
+                            if (Game.IsControlPressed(2, GameControl.CellphoneDown))
+                                deathCamera.FOV += 0.5f;
+                            else if (Game.IsControlPressed(2, GameControl.CellphoneUp))
+                                deathCamera.FOV -= 0.5f;
 
-                            if (Game.IsShiftKeyDownRightNow)
+                            if (Game.IsControlPressed(2, GameControl.Sprint))
                                 cameraSpeedFactor += 0.1f;
                             else
                                 cameraSpeedFactor = MathHelper.Max(1f, cameraSpeedFactor - 0.2f);
