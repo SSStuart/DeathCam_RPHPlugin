@@ -2,6 +2,7 @@
 using Rage.Native;
 using RAGENativeUI;
 using RAGENativeUI.Elements;
+using System.Reflection;
 
 [assembly: Rage.Attributes.Plugin("DeathCam", Description = "Removes the filter and fade to black when the player dies, and allows the camera to move freely.", Author = "SSStuart")]
 
@@ -11,11 +12,19 @@ namespace DeathCam
     public static class EntryPoint
     {
         public static string pluginName = "DeathCam";
-        public static string pluginVersion = "v 0.0.3";
+        public static string pluginVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+
         public static void Main()
         {
-            Game.LogTrivial(pluginName + " loaded.");
-            
+            Game.LogTrivial($"{pluginName} Plugin v{pluginVersion} has been loaded.");
+
+            // Check for updates
+            bool updateAvailable = false;
+            System.Threading.Tasks.Task.Run(async () =>
+            {
+                updateAvailable = await UpdateChecker.CheckUpdate();
+            });
+
             Camera deathCamera;
             float cameraSpeedFactor = 1;
             Game.DisableAutomaticRespawn = true;
@@ -23,13 +32,19 @@ namespace DeathCam
 
             GameFiber.StartNew(delegate
             {
-
                 while (true)
                 {
                     GameFiber.Yield();
-                    
+
+                    if (updateAvailable)
+                    {
+                        UpdateChecker.DisplayUpdateNotification();
+                        updateAvailable = false;
+                    }
+
                     if (!Game.LocalPlayer.Character.IsAlive)
                     {
+                        Game.LogTrivial($"[{pluginName}] Player has died, starting DeathCam sequence.");
                         bool revived = false;
 
                         Game.LocalPlayer.IsIgnoredByEveryone = true;
@@ -42,6 +57,7 @@ namespace DeathCam
                         deathCamera.PointAtEntity(Game.LocalPlayer.Character, new Vector3(), true);
                         deathCamera.Shake("HAND_SHAKE", 0.03f);
                         deathCamera.Active = true;
+                        Game.LogTrivial($"[{pluginName}] Camera enabled.");
 
                         BigMessageThread bigMessageThread = new BigMessageThread(true);
                         BigMessageHandler bigMessage = bigMessageThread.MessageInstance;
@@ -102,6 +118,8 @@ namespace DeathCam
                                 revived = true;
                             }
                         }
+                        Game.LogTrivial($"[{pluginName}] Respawn key pressed... Letting the game handle the respawn");
+
                         Game.LocalPlayer.IsIgnoredByEveryone = false;
                         Game.FadeScreenOut(500); GameFiber.Sleep(500);
                         Game.HandleRespawn();
