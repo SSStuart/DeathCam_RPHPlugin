@@ -8,5 +8,6 @@ Use the <kbd>Sprint</kbd> control to increase the camera movement speed.
 You can also zoom in and out with the scroll wheel or the <kbd>Phone Up</kbd>/<kbd>Phone Down</kbd> controls.  
 Press the <kbd>Jump</kbd> control to reappear. 
 
-## `ℹ` Prerequisite
+## `ℹ` Prerequisites
 - [RAGE Plugin Hook](https://ragepluginhook.net/Downloads.aspx)
+- [RAGENativeUI](https://github.com/alexguirre/RAGENativeUI/releases)
