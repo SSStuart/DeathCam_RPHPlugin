@@ -18,12 +18,7 @@ namespace DeathCam
         {
             Game.LogTrivial($"{pluginName} Plugin v{pluginVersion} has been loaded.");
 
-            // Check for updates
-            bool updateAvailable = false;
-            System.Threading.Tasks.Task.Run(async () =>
-            {
-                updateAvailable = await UpdateChecker.CheckUpdate();
-            });
+            UpdateChecker.CheckForUpdates();
 
             Camera deathCamera;
             float cameraSpeedFactor = 1;
@@ -35,12 +30,6 @@ namespace DeathCam
                 while (true)
                 {
                     GameFiber.Yield();
-
-                    if (updateAvailable)
-                    {
-                        UpdateChecker.DisplayUpdateNotification();
-                        updateAvailable = false;
-                    }
 
                     if (!Game.LocalPlayer.Character.IsAlive)
                     {
@@ -99,7 +88,8 @@ namespace DeathCam
                             else if (Game.IsControlPressed(2, GameControl.CellphoneUp))
                                 deathCamera.FOV -= 0.5f;
 
-                            if (Game.IsControlPressed(2, GameControl.Sprint))
+                            // GameControl.Sprint doesn't work for some reason
+                            if (Game.IsControlPressed(2, GameControl.ParachutePrecisionLanding))
                                 cameraSpeedFactor += 0.1f;
                             else
                                 cameraSpeedFactor = MathHelper.Max(1f, cameraSpeedFactor - 0.2f);

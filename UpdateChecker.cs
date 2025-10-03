@@ -11,8 +11,32 @@ namespace DeathCam
         private static readonly HttpClient httpClient = new HttpClient();
         private static Version lastVersion = null;
         private static readonly Version currentVersion = new Version(EntryPoint.pluginVersion);
+        private static string updateAvailable = "";
 
-        public static async System.Threading.Tasks.Task<bool> CheckUpdate()
+        public static void CheckForUpdates()
+        {
+            System.Threading.Tasks.Task.Run(async () =>
+            {
+                updateAvailable = await CheckUpdate();
+            });
+
+            GameFiber.StartNew(updateNotification);
+
+            void updateNotification()
+            {
+                do
+                {
+                    GameFiber.Yield();
+
+                    if (updateAvailable == "yes")
+                    {
+                        DisplayUpdateNotification();
+                    }
+                } while (updateAvailable == "");
+            }
+        }
+
+        private static async System.Threading.Tasks.Task<string> CheckUpdate()
         {
             try
             {
@@ -34,29 +58,29 @@ namespace DeathCam
                     if (currentVersion < lastVersion)
                     {
                         Game.LogTrivial($"[{EntryPoint.pluginName}] Update available ! Current version: {currentVersion}, Latest version: {lastVersion}");
-                        return true;
+                        return "yes";
                     } else if (currentVersion >= lastVersion)
                     {
                         Game.LogTrivial($"[{EntryPoint.pluginName}] You are using the latest version ({currentVersion}).");
-                        return false;
+                        return "no";
                     }
                     
                 } else
                 {
                     Game.LogTrivial($"[{EntryPoint.pluginName}] Update check failed: Could not parse version from response : {responseMessage}");
-                    return false;
+                    return "error";
                 }
             }
             catch (Exception ex)
             {
                 Game.LogTrivial($"[{EntryPoint.pluginName}] Update check failed: {ex.InnerException}");
-                return false;
+                return "error";
             }
 
-            return false;
+            return "error";
         }
 
-        public static void DisplayUpdateNotification()
+        private static void DisplayUpdateNotification()
         {
             do
             {
