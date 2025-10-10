@@ -88,8 +88,8 @@ namespace DeathCam
                             else if (Game.IsControlPressed(2, GameControl.CellphoneUp))
                                 deathCamera.FOV -= 0.5f;
 
-                            // GameControl.Sprint doesn't work for some reason
-                            if (Game.IsControlPressed(2, GameControl.ParachutePrecisionLanding))
+                            // Controller support for increasing/decreasing camera movement speed (Sprint control doesn't work)
+                            if (Game.IsControlPressed(2, GameControl.Duck))
                                 cameraSpeedFactor += 0.1f;
                             else
                                 cameraSpeedFactor = MathHelper.Max(1f, cameraSpeedFactor - 0.2f);
