@@ -18,7 +18,7 @@ namespace DeathCam
 
         public static void Main()
         {
-            Game.LogTrivial($"{pluginName} Plugin v{pluginVersion} has been loaded.");
+            Game.LogTrivial($"{pluginName} plugin v{pluginVersion} has been loaded.");
 
             UpdateChecker.CheckForUpdates();
 
@@ -105,7 +105,7 @@ namespace DeathCam
 
         private static void EnableCamera()
         {
-            Game.LogTrivial($"[{pluginName}] Player has died, starting DeathCam sequence.");
+            Game.LogTrivial($"Player has died, starting DeathCam sequence.");
             
             Game.LocalPlayer.IsIgnoredByEveryone = true;
             deathCamera = new Camera(false)
@@ -117,7 +117,7 @@ namespace DeathCam
             deathCamera.PointAtEntity(Game.LocalPlayer.Character, new Vector3(), true);
             deathCamera.Shake("HAND_SHAKE", 0.01f);
             deathCamera.Active = true;
-            Game.LogTrivial($"[{pluginName}] Camera enabled.");
+            Game.LogTrivial($"Camera enabled.");
 
             uint DeathTimeout = Game.GameTime + 3500;
             while (Game.GameTime < DeathTimeout)
@@ -137,7 +137,7 @@ namespace DeathCam
         {
             if (samePlace)
             {
-                Game.LogTrivial($"[{pluginName}] Respawning is same place");
+                Game.LogTrivial($"Respawning is same place");
                 Vector3 deathPosition = Game.LocalPlayer.Character.Position;
                 Game.DisableAutomaticRespawn = true;
                 Game.FadeScreenOutOnDeath = false;
@@ -149,7 +149,7 @@ namespace DeathCam
             }
             else
             {
-                Game.LogTrivial($"[{pluginName}] Letting the game handle the respawn (hospital)");
+                Game.LogTrivial($"Letting the game handle the respawn (hospital)");
                 Game.HandleRespawn();
                 Game.FadeScreenOut(500); GameFiber.Sleep(500);
             }
@@ -169,6 +169,5 @@ namespace DeathCam
             Game.LogTrivial("Resetting respawn pos");
             NativeFunction.Natives.CLEAR_RESTART_COORD_OVERRIDE();
         }
-
     }
 }

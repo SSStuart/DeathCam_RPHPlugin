@@ -54,26 +54,26 @@ namespace DeathCam
                     Capture c = cc[0];
                     lastVersion = new Version(c.ToString());
 
-                    Game.LogTrivial($"[{EntryPoint.pluginName}] Current version: {currentVersion}, Latest version: {lastVersion}");
+                    Game.LogTrivial($"Current version: {currentVersion}, Latest version: {lastVersion}");
                     if (currentVersion < lastVersion)
                     {
-                        Game.LogTrivial($"[{EntryPoint.pluginName}] Update available ! Current version: {currentVersion}, Latest version: {lastVersion}");
+                        Game.LogTrivial($"Update available ! Current version: {currentVersion}, Latest version: {lastVersion}");
                         return "yes";
                     } else if (currentVersion >= lastVersion)
                     {
-                        Game.LogTrivial($"[{EntryPoint.pluginName}] You are using the latest version ({currentVersion}).");
+                        Game.LogTrivial($"You are using the latest version ({currentVersion}).");
                         return "no";
                     }
                     
                 } else
                 {
-                    Game.LogTrivial($"[{EntryPoint.pluginName}] Update check failed: Could not parse version from response : {responseMessage}");
+                    Game.LogTrivial($"Update check failed: Could not parse version from response : {responseMessage}");
                     return "error";
                 }
             }
             catch (Exception ex)
             {
-                Game.LogTrivial($"[{EntryPoint.pluginName}] Update check failed: {ex.InnerException}");
+                Game.LogTrivial($"Update check failed: {ex.InnerException}");
                 return "error";
             }
 
