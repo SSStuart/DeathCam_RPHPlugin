@@ -87,7 +87,7 @@ namespace DeathCam
                 GameFiber.Yield();
                 GameFiber.Sleep(5000);
             } while (Game.IsLoading);
-            Game.DisplayNotification("mpturf", "swap", EntryPoint.pluginName, $"V {lastVersion}", $"~y~Update available !");
+            Game.DisplayNotification("mpturf", "swap", EntryPoint.pluginName, $"V {lastVersion}", EntryPoint.l10n.GetString("updateAvailable"));
         }
     }
 }

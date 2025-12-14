@@ -2,7 +2,9 @@
 using Rage.Native;
 using RAGENativeUI;
 using RAGENativeUI.Elements;
+using System.IO;
 using System.Reflection;
+using Localization = DeleteThatEntity.Localization;
 
 [assembly: Rage.Attributes.Plugin("DeathCam", Description = "Removes the filter and fade to black when the player dies, and allows the camera to move freely.", Author = "SSStuart", PrefersSingleInstance = true, SupportUrl = "https://ssstuart.net/discord")]
 
@@ -12,6 +14,7 @@ namespace DeathCam
     {
         public static string pluginName = "DeathCam";
         public static string pluginVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+        public static Localization l10n = new Localization();
 
         private static Camera deathCamera;
         private static BigMessageHandler bigMessage;
@@ -21,6 +24,28 @@ namespace DeathCam
             Game.LogTrivial($"{pluginName} plugin v{pluginVersion} has been loaded.");
 
             UpdateChecker.CheckForUpdates();
+
+            if (IsMenyooManualRespawnEnabled())
+            {
+                do
+                {
+                    GameFiber.Yield();
+                    GameFiber.Sleep(5000);
+                } while (Game.IsLoading);
+                Game.DisplayNotification("commonmenu", "mp_alerttriangle", pluginName, $"V {pluginVersion}", l10n.GetString("menyooConflict"));
+                Game.LogTrivial("Menyoo \"Manual Respawn\" setting enabled. Stopping...");
+                return;
+            } else if (IsMenyooInstalled())
+            {
+                do
+                {
+                    GameFiber.Yield();
+                    GameFiber.Sleep(5000);
+                } while (Game.IsLoading);
+                Game.DisplayNotification("commonmenu", "mp_alerttriangle", pluginName, $"V {pluginVersion}", l10n.GetString("menyooWarning"));
+            }
+
+            Settings.LoadSettings();
 
             float cameraSpeedFactor = 1;
             Game.DisableAutomaticRespawn = true;
@@ -40,7 +65,6 @@ namespace DeathCam
 
                     // Player died
                     bool revived = false;
-                    bool shouldRespawnInPlace = false;
 
                     EnableCamera();
 
@@ -48,6 +72,7 @@ namespace DeathCam
                     {
                         GameFiber.Yield();
                         // Reset fade out
+                        NativeFunction.Natives.ANIMPOSTFX_STOP_ALL();
                         if (Game.IsScreenFadingOut)
                             Game.FadeScreenIn(0);
 
@@ -89,16 +114,10 @@ namespace DeathCam
                         // Respawn condition
                         if (Game.LocalPlayer.Character.Health > Game.LocalPlayer.Character.FatalInjuryHealthThreshold
                             || Game.IsControlPressed(2, GameControl.Jump))
-                        {
                             revived = true;
-                        } else if (Game.IsControlPressed(2, GameControl.Cover))
-                        {
-                            revived = true;
-                            shouldRespawnInPlace = true;
-                        }
                     }
 
-                    Respawn(shouldRespawnInPlace);
+                    Respawn();
                 }
             });
         }
@@ -106,7 +125,7 @@ namespace DeathCam
         private static void EnableCamera()
         {
             Game.LogTrivial($"Player has died, starting DeathCam sequence.");
-            
+
             Game.LocalPlayer.IsIgnoredByEveryone = true;
             deathCamera = new Camera(false)
             {
@@ -115,7 +134,8 @@ namespace DeathCam
                 Rotation = NativeFunction.Natives.GET_GAMEPLAY_CAM_ROT<Rotator>()
             };
             deathCamera.PointAtEntity(Game.LocalPlayer.Character, new Vector3(), true);
-            deathCamera.Shake("HAND_SHAKE", 0.01f);
+            if (Settings.CAMERA_SHAKE)
+               deathCamera.Shake("HAND_SHAKE", 0.01f);
             deathCamera.Active = true;
             Game.LogTrivial($"Camera enabled.");
 
@@ -127,32 +147,35 @@ namespace DeathCam
                 if (Game.IsScreenFadingOut)
                     Game.FadeScreenIn(0);
                 Game.TimeScale = 1.0f;
+                NativeFunction.Natives.ANIMPOSTFX_STOP_ALL();
+                if (Settings.HIDE_WASTED_MESSAGE)
+                    bigMessage.ShowOldMessage("", 0);
             }
-            NativeFunction.Natives.ANIMPOSTFX_STOP_ALL();
             NativeFunction.Natives.STOP_CAM_POINTING(deathCamera);
-            bigMessage.ShowColoredShard(" ", "Press ~b~" + GameControl.Jump + "~w~ to respawn", HudColor.Damage, HudColor.InGameBackground, 2000);
+            if (!Settings.HIDE_WASTED_MESSAGE)
+                bigMessage.ShowColoredShard(l10n.GetString("wasted"), l10n.GetString("pressJumpToRespawn", ("jumpControl", GameControl.Jump)), HudColor.Red, HudColor.InGameBackground, 2000);
+            Game.LocalPlayer.WantedLevel = 0;
         }
 
-        private static void Respawn(bool samePlace = false)
+        private static void Respawn()
         {
-            if (samePlace)
-            {
-                Game.LogTrivial($"Respawning is same place");
-                Vector3 deathPosition = Game.LocalPlayer.Character.Position;
-                Game.DisableAutomaticRespawn = true;
-                Game.FadeScreenOutOnDeath = false;
-                Game.LocalPlayer.Character.Health = Game.LocalPlayer.Character.MaxHealth;
-                Game.LocalPlayer.Character.Resurrect();
-                NativeFunction.Natives.SET_PED_TO_RAGDOLL(Game.LocalPlayer.Character, 1000, 5000, 2, false, false, false);
-                Game.LocalPlayer.Character.Velocity = Vector3.Zero;
-                Game.HandleRespawn();
-            }
-            else
-            {
+            //if (Settings.RESPAWN_IN_PLACE)
+            //{
+            //    Game.LogTrivial($"Respawning is same place");
+            //    //ToggleHospitals(false);
+            //    Game.DisableAutomaticRespawn = true;
+            //    Game.FadeScreenOutOnDeath = false;
+            //    Game.LocalPlayer.Character.Resurrect();
+            //    GameFiber.Sleep(10);
+            //    Game.LocalPlayer.Character.Velocity = Vector3.Zero;
+            //    Game.HandleRespawn();
+            //}
+            //else
+            //{
                 Game.LogTrivial($"Letting the game handle the respawn (hospital)");
                 Game.HandleRespawn();
                 Game.FadeScreenOut(500); GameFiber.Sleep(500);
-            }
+            //}
 
             Game.LogTrivial("Resetting player attribute and removing cam");
             Game.LocalPlayer.IsIgnoredByEveryone = false;
@@ -166,8 +189,45 @@ namespace DeathCam
                 GameFiber.Sleep(5000);
             } while (Game.IsScreenFadedOut);
 
-            Game.LogTrivial("Resetting respawn pos");
-            NativeFunction.Natives.CLEAR_RESTART_COORD_OVERRIDE();
+            //Game.LogTrivial("Resetting respawn pos");
+            //ToggleHospitals(true);
+        }
+
+        private static void ToggleHospitals(bool enable)
+        {
+            Game.LogTrivial((enable ? "Enabling" : "Disabling") + " all hospitals");
+            for (int hospital = 0; hospital < 5; hospital++)
+                NativeFunction.Natives.DISABLE_HOSPITAL_RESTART(hospital, !enable);
+
+            if (enable)
+            {
+                NativeFunction.Natives.CLEAR_RESTART_COORD_OVERRIDE();
+            }
+            else
+            {
+                NativeFunction.Natives.SET_RESTART_COORD_OVERRIDE(Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z, Game.LocalPlayer.Character.Heading);
+            }
+        }
+
+        private static bool IsMenyooInstalled()
+        {
+            return File.Exists("./Menyoo.asi");
+        }
+
+        private static bool IsMenyooManualRespawnEnabled()
+        {
+            if (File.Exists("./menyooStuff/menyooConfig.ini"))
+            {
+                string[] lines = File.ReadAllLines("./menyooStuff/menyooConfig.ini");
+                foreach (string line in lines)
+                {
+                    if (line.Contains("manual_respawn") && (line.Contains("= true") || line.Contains("= 1")))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
     }
 }
