@@ -18,6 +18,7 @@ namespace DeathCam
 
         private static Camera deathCamera;
         private static BigMessageHandler bigMessage;
+        private static bool revived = true;
 
         public static void Main()
         {
@@ -64,7 +65,7 @@ namespace DeathCam
                     }
 
                     // Player died
-                    bool revived = false;
+                    revived = false;
 
                     EnableCamera();
 
@@ -77,8 +78,8 @@ namespace DeathCam
                             Game.FadeScreenIn(0);
 
                         // Camera rotation
-                        float yRotMagnitude = NativeFunction.CallByName<float>("GET_CONTROL_NORMAL", 0, (int)GameControl.LookUpDown) * 10f;
-                        float xRotMagnitude = NativeFunction.CallByName<float>("GET_CONTROL_NORMAL", 0, (int)GameControl.LookLeftRight) * 10f;
+                        float yRotMagnitude = NativeFunction.CallByName<float>("GET_CONTROL_NORMAL", 0, (int)GameControl.LookUpDown) * (Game.IsControllerConnected ? 2.5f : 10);
+                        float xRotMagnitude = NativeFunction.CallByName<float>("GET_CONTROL_NORMAL", 0, (int)GameControl.LookLeftRight) * (Game.IsControllerConnected ? 2.5f : 10);
 
                         float newPitch = deathCamera.Rotation.Pitch - yRotMagnitude;
                         float newYaw = deathCamera.Rotation.Yaw - xRotMagnitude;
@@ -95,11 +96,13 @@ namespace DeathCam
                         else if (Game.IsControlPressed(2, GameControl.CellphoneUp))
                             deathCamera.FOV -= 0.5f;
 
-                        // Controller support for increasing/decreasing camera movement speed (Sprint control doesn't work)
-                        if (Game.IsControlPressed(2, GameControl.Duck))
+                        // Camera movement speed
+                        //  Increase  (Shift for keyboard | Attack for controller)
+                        if (Game.IsShiftKeyDownRightNow || Game.IsControlPressed(2, GameControl.Attack))
                             cameraSpeedFactor += 0.1f;
-                        else
-                            cameraSpeedFactor = MathHelper.Max(1f, cameraSpeedFactor - 0.2f);
+                        //  Decrease  (Ctrl for keyboard | Aim for controller)
+                        else if (Game.IsControlKeyDownRightNow|| Game.IsControlPressed(2, GameControl.Aim))
+                            cameraSpeedFactor = MathHelper.Max(1f, cameraSpeedFactor - 0.1f);
 
                         // Camera movements
                         if (Game.IsControlPressed(2, GameControl.MoveUpOnly) && deathCamera.DistanceTo(Game.LocalPlayer.Character) > 1)
@@ -228,6 +231,15 @@ namespace DeathCam
                 }
             }
             return false;
+        }
+
+        private static void OnUnload(bool variable)
+        {
+            Game.LogTrivial("Unloading...");
+            if (!revived)
+            {
+                Respawn();
+            }
         }
     }
 }
