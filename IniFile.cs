@@ -4,7 +4,7 @@ namespace DeathCam
 {
     internal static class Settings
     {
-        internal static bool RESPAWN_IN_PLACE = false;
+        internal static string RESPAWN_IN_PLACE = "choice";
         internal static bool HIDE_WASTED_MESSAGE = false;
         internal static bool CAMERA_SHAKE = true;
 
@@ -15,8 +15,8 @@ namespace DeathCam
             var ini = new InitializationFile(path);
             ini.Create();
 
-            RESPAWN_IN_PLACE = ini.ReadBoolean("General", "RespawnInPlace", false);
-            Game.LogTrivial($"- Respawn in place: {(RESPAWN_IN_PLACE ? "Yes" : "No")}");
+            RESPAWN_IN_PLACE = ini.ReadString("General", "RespawnInPlace", "choice").ToLower();
+            Game.LogTrivial($"- Respawn in place: {(RESPAWN_IN_PLACE == "no" ? "Never" : (RESPAWN_IN_PLACE == "yes" ? "Always" : "Choice"))}");
             HIDE_WASTED_MESSAGE = ini.ReadBoolean("General", "HideWastedMessage", false);
             Game.LogTrivial($"- Hide 'Wasted' message: {(HIDE_WASTED_MESSAGE ? "Yes" : "No")}");
             CAMERA_SHAKE = ini.ReadBoolean("Camera", "CameraShake", true);

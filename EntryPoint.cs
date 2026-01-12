@@ -66,6 +66,7 @@ namespace DeathCam
 
                     // Player died
                     revived = false;
+                    bool respawnInPlace = false;
 
                     EnableCamera();
 
@@ -117,10 +118,13 @@ namespace DeathCam
                         // Respawn condition
                         if (Game.LocalPlayer.Character.Health > Game.LocalPlayer.Character.FatalInjuryHealthThreshold
                             || Game.IsControlPressed(2, GameControl.Jump))
+                        {
                             revived = true;
+                            respawnInPlace = Settings.RESPAWN_IN_PLACE == "yes" || (Game.IsControlKeyDownRightNow && Settings.RESPAWN_IN_PLACE == "choice");
+                        }
                     }
 
-                    Respawn();
+                    Respawn(respawnInPlace);
                 }
             });
         }
@@ -156,29 +160,36 @@ namespace DeathCam
             }
             NativeFunction.Natives.STOP_CAM_POINTING(deathCamera);
             if (!Settings.HIDE_WASTED_MESSAGE)
-                bigMessage.ShowColoredShard(l10n.GetString("wasted"), l10n.GetString("pressJumpToRespawn", ("jumpControl", GameControl.Jump)), HudColor.Red, HudColor.InGameBackground, 2000);
+                bigMessage.ShowColoredShard(l10n.GetString("wasted"), l10n.GetString(Settings.RESPAWN_IN_PLACE == "choice" ? "pressJumpToRespawnChoice" : "pressJumpToRespawn", ("jumpControl", GameControl.Jump)), HudColor.Red, HudColor.InGameBackground, 2000);
             Game.LocalPlayer.WantedLevel = 0;
         }
 
-        private static void Respawn()
+        private static void Respawn(bool respawnInPlace)
         {
-            //if (Settings.RESPAWN_IN_PLACE)
-            //{
-            //    Game.LogTrivial($"Respawning is same place");
-            //    //ToggleHospitals(false);
-            //    Game.DisableAutomaticRespawn = true;
-            //    Game.FadeScreenOutOnDeath = false;
-            //    Game.LocalPlayer.Character.Resurrect();
-            //    GameFiber.Sleep(10);
-            //    Game.LocalPlayer.Character.Velocity = Vector3.Zero;
-            //    Game.HandleRespawn();
-            //}
-            //else
-            //{
+            if (respawnInPlace)
+            {
+                Game.LogTrivial($"Respawning is same place");
+                Vector3 respawnPos = Game.LocalPlayer.Character.Position;
+                Game.DisableAutomaticRespawn = true;
+                Game.FadeScreenOutOnDeath = false;
+
+                // Inspired by https://github.com/gta-chaos-mod/ChaosModV/blob/9301f701dcd29e558a7955f260a3fcb327e66a21/ChaosMod/Components/CrossingChallenge.cpp#L33C1-L33C41
+                Game.TerminateAllScriptsWithName("respawn_controller");
+                Game.FadeScreenOut(200);
+                NativeFunction.Natives.NETWORK_REQUEST_CONTROL_OF_ENTITY<bool>(Game.LocalPlayer.Character);
+                NativeFunction.Natives.NETWORK_RESURRECT_LOCAL_PLAYER(respawnPos.X, respawnPos.Y, respawnPos.Z, Game.LocalPlayer.Character.Heading, false, false, false, 0, 0);
+                GameFiber.Sleep(2000);
+                NativeFunction.Natives.FORCE_GAME_STATE_PLAYING();
+                NativeFunction.Natives.RESET_PLAYER_ARREST_STATE(Game.LocalPlayer.Character);
+                NativeFunction.Natives.DISPLAY_HUD(true);
+                Game.FadeScreenIn(200);
+            }
+            else
+            {
                 Game.LogTrivial($"Letting the game handle the respawn (hospital)");
                 Game.HandleRespawn();
                 Game.FadeScreenOut(500); GameFiber.Sleep(500);
-            //}
+            }
 
             Game.LogTrivial("Resetting player attribute and removing cam");
             Game.LocalPlayer.IsIgnoredByEveryone = false;
@@ -191,25 +202,6 @@ namespace DeathCam
             {
                 GameFiber.Sleep(5000);
             } while (Game.IsScreenFadedOut);
-
-            //Game.LogTrivial("Resetting respawn pos");
-            //ToggleHospitals(true);
-        }
-
-        private static void ToggleHospitals(bool enable)
-        {
-            Game.LogTrivial((enable ? "Enabling" : "Disabling") + " all hospitals");
-            for (int hospital = 0; hospital < 5; hospital++)
-                NativeFunction.Natives.DISABLE_HOSPITAL_RESTART(hospital, !enable);
-
-            if (enable)
-            {
-                NativeFunction.Natives.CLEAR_RESTART_COORD_OVERRIDE();
-            }
-            else
-            {
-                NativeFunction.Natives.SET_RESTART_COORD_OVERRIDE(Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z, Game.LocalPlayer.Character.Heading);
-            }
         }
 
         private static bool IsMenyooInstalled()
@@ -237,9 +229,8 @@ namespace DeathCam
         {
             Game.LogTrivial("Unloading...");
             if (!revived)
-            {
-                Respawn();
-            }
+                Respawn(false);
+            Game.LogTrivial("Unloaded");
         }
     }
 }

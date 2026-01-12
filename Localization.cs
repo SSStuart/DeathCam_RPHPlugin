@@ -16,6 +16,7 @@ namespace DeleteThatEntity
                     { "menyooWarning", "~o~Menyoo detected~w~. ~n~The plugin may not work correctly with it." },
                     { "wasted", "Wasted" },
                     { "pressJumpToRespawn", "Press ~b~:jumpControl~w~ to respawn" },
+                    { "pressJumpToRespawnChoice", "~b~:jumpControl~w~ to respawn.~n~~b~:jumpControl~w~+~b~Ctrl~w~ to respawn in place" },
                 }
             },
             {"fr",
@@ -25,6 +26,7 @@ namespace DeleteThatEntity
                     { "menyooWarning", "~o~Menyoo détecté~w~. ~n~Le plugin peut ne pas fonctionner correctement avec lui." },
                     { "wasted", "Vous êtes mort" },
                     { "pressJumpToRespawn", "Appuyez sur ~b~:jumpControl~w~ pour réapparaitre" },
+                    { "pressJumpToRespawnChoice", "~b~:jumpControl~w~ pour réapparaitre.~n~~b~:jumpControl~w~+~b~Ctrl~w~ au même endroit" },
                 }
             }
         };
