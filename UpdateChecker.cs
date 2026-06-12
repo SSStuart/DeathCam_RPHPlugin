@@ -74,7 +74,10 @@ namespace DeathCam
             // Check if the last update check was made more than one "interval" ago
             DateTime lastCheck = DateTime.Parse(updateSettings.ReadString("Datas", $"{pluginKey}_lastUpdate"));
             if (lastCheck.AddDays(checkFrequency) < DateTime.Now)
+            {
+                updateSettings.Write("Datas", $"{pluginKey}_lastUpdate", DateTime.Now.ToString("O"));
                 return true;
+            }
             else
             {
                 Game.LogTrivial($"[{EntryPoint.pluginName}] Updates already checked recently");
