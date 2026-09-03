@@ -162,6 +162,18 @@ namespace DeathCam
             if (!Settings.HIDE_WASTED_MESSAGE)
                 bigMessage.ShowColoredShard(l10n.GetString("wasted"), l10n.GetString(Settings.RESPAWN_IN_PLACE == "choice" ? "pressJumpToRespawnChoice" : "pressJumpToRespawn", ("jumpControl", GameControl.Jump)), HudColor.Red, HudColor.InGameBackground, 2000);
             Game.LocalPlayer.WantedLevel = 0;
+            GameFiber.Wait(2000);
+            foreach (Ped ped in World.GetAllPeds())
+            {
+                if (ped.CombatTarget == Game.LocalPlayer.Character)
+                {
+                    if (ped.IsOnFoot)
+                        ped.Tasks.AimWeaponAt(Game.LocalPlayer.Character, MathHelper.GetRandomInteger(5) * 1000);
+                    else
+                        ped.Tasks.Clear();
+                }
+               
+            }
         }
 
         private static void Respawn(bool respawnInPlace)
